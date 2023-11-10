@@ -21,30 +21,30 @@ app.get(
 );
 
 // Endpoint for creating user
-app.post("/users", async (req: Request, res: Response): Promise<void> => {
+app.post("/users", async (req: Request, res: Response):  Promise<Response<IUser>> => {
     try {
         const createdUser = await User.create({ ...req.body });
-        res.status(201).json(createdUser);
+       return  res.status(201).json(createdUser);
     } catch (e) {
-        res.status(400).json(e.message);
+       return  res.status(400).json(e.message);
     }
 });
 
-app.get("/users/:id",async (req: Request, res: Response)  => {
+app.get("/users/:id",async (req: Request, res: Response):  Promise<Response<IUser>>  => {
     try {
         const {id} = req.params
         const user = await User.findById(id)
         if (!user) {
             throw new Error("User not found");
         }
-        res.json(user);
+       return res.json(user);
     } catch (e) {
-        res.status(404).json(e.message);
+       return res.status(404).json(e.message);
     }
 });
 
-//
-app.delete("/users/:id", async (req: Request, res: Response) => {
+
+app.delete("/users/:id", async (req: Request, res: Response): Promise<void>  => {
     try {
         const { id } = req.params;
         const user = await  User.findById(id)
@@ -59,23 +59,25 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
     }
 });
 
-app.put("/users/:id", async (req, res) => {
+app.put("/users/:id", async (req: Request, res: Response): Promise<Response<IUser>> => {
     try {
         const { id } = req.params;
 
-        const {error, value} = UserValidator.update.validate(req.body)
-        const user = await User.findByIdAndUpdate(id,value,{
-            returnDocument: 'after'
-        })
+        const { error, value } = UserValidator.update.validate(req.body);
+
+        const user = await  User.findById(id)
+
         if (!user) {
-            throw new Error("User not found");
+            return res.status(404).json("User not found");
         }
 
+        const updatedUser = await User.findByIdAndUpdate(id, value, {
+            returnDocument: 'after'
+        });
 
-
-        res.status(201).json(user);
+        return res.status(201).json(updatedUser);
     } catch (e) {
-        res.status(404).json(e.message);
+        return res.status(500).json(e.message);
     }
 });
 
